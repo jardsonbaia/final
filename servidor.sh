@@ -1,20 +1,22 @@
 #!/bin/bash
 
-#INSTALA O O QUE É NECESSÁRIO
-sudo apt -y update
-sudo apt -y install php-curl php-gd php-mbstring php-xml php-xmlrpc
-sudo apt-get -y install mysql-server
-sudo apt -y install apache2
+#instalando e atualizando
+sudo apt update -y
+sudo apt install php-curl php-gd php-mbstring php-xml php-xmlrpc -y
 sudo apt -y install php libapache2-mod-php php-mysql
+sudo apt install apache2 -y
+sudo apt install mysql-server -y
+sudo apt install curl -y
+
+#instalando o wp-cli
+curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+
+chmod +x wp-cli.phar
+sudo mv wp-cli.phar /usr/local/bin/wp
 
 #CONFIGURA MYSQL PRA RECEBER O WORDPRESS
 sudo mysql <<EOF
-
-CREATE DATABASE wordpress;
-
-CREATE USER 'wp_admin'@'localhost' IDENTIFIED BY 'root';
-
-GRANT ALL ON wordpress.* TO 'wp_admin'@'localhost';
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'root';
 
 FLUSH PRIVILEGES;
 EOF
@@ -27,41 +29,20 @@ sudo systemctl stop apache2.service
 sudo systemctl start apache2.service
 sudo systemctl enable apache2.service
 
-#BAIXANDO WORDPRESS
-
-wget https://wordpress.org/latest.tar.gz
-tar -zxvf latest.tar.gz
-sudo mv wordpress /var/www/html/wordpress
-
-#SETANDO PERMIÇÕES NECESSÁRIAS
-sudo chown -R www-data:www-data /var/www/html/wordpress/
-sudo chmod -R 755 /var/www/html/wordpress/
-
-sudo echo -e "<VirtualHost *:80> \n \
-   ServerAdmin admin@example.com \n \
-   DocumentRoot /var/www/html/wordpress/ \n \
-   ServerName example.com \n \
-   ServerAlias www.example.com \n \n \
-   <Directory /var/www/html/wordpress/> \n 
-        Options +FollowSymlinks \n \
-        AllowOverride All \n \
-        Require all granted \n \
-   </Directory> \n \n \
-   ErrorLog ${APACHE_LOG_DIR}/error.log \n \
-   CustomLog ${APACHE_LOG_DIR}/access.log combined \n \n \
-</VirtualHost>" > /etc/apache2/sites-available/wordpress.conf
-
-#ATIVA O SITE DO WORDPRESS.CONF
-
-sudo a2ensite wordpress.conf
-sudo a2enmod rewrite
-sudo systemctl restart apache2
-
-
+cd /var/www/html
+#sudo mkdir d
+#cd /var/www/html/d
+sudo mkdir ind
+sudo mv index.html ind
+sudo chown -R `whoami`:www-data /var/www/html
+wp core download --locale=pt_BR
 #CONFIGURANDO BD DO WORDPRESS
+wp core config --dbname=cz --dbuser=root --dbpass=root --dbhost=localhost --dbprefix=coz
+wp db create
+IP="$(curl http://169.254.169.254/latest/meta-data/public-ipv4)"
+echo $IP
+wp core install --url=http://$IP --title=Blog\ Cozinha --admin_user=admin --admin_password=123456 --admin_email=teste@teste.com.br
 
-sudo mv /var/www/html/wordpress/wp-config-sample.php /var/www/html/wordpress/wp-config.php
 
-sudo sed -i 's/database_name_here/wordpress/g' /var/www/html/wordpress/wp-config.php
-sudo sed -i 's/username_here/wp_admin/g' /var/www/html/wordpress/wp-config.php 
-sudo sed -i 's/password_here/root/g' /var/www/html/wordpress/wp-config.php
+
+
