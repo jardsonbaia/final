@@ -44,7 +44,7 @@ sudo sed -i "s/localhost/$ip_banco/g" /var/www/html/wordpress/wp-config.php
 ## ALTERANDO A LINGUAGEM PARA PORTUGUES BRASILEIRO
 sudo sed -i "s/\$language = ''/\$language = 'pt_BR'/" /var/www/html/wordpress/wp-admin/install.php
 sudo echo "define('WPLANG', 'pt_BR');" >> /var/www/html/wordpress/wp-config.php
-wget https://github.com/Iasmynmagalhaes/topicos/blob/master/languages.tar.gz
+wget https://github.com/eduardaviriato/final/blob/master/languages.tar.gz
 tar -zxf languages.tar.gz
 rm languages.tar.gz
 sudo mv languages /var/www/html/wordpress/wp-content/languages
@@ -65,3 +65,4 @@ sed -i ""$n"s/: '';/: '"$senha"';/" /var/www/html/wordpress/wp-admin/install.php
 aux=`grep -n '$admin_email[[:blank:]]*=' /var/www/html/wordpress/wp-admin/install.php | cut -f 1 -d ":"`
 n=`echo $aux | cut -f 2 -d " "`
 sed -i ""$n"s/: '';/: 'admin@email.com';/" /var/www/html/wordpress/wp-admin/install.php
+
