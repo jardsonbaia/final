@@ -1,48 +1,30 @@
 #!/bin/bash
-
-#instalando e atualizando
-sudo apt update -y
-sudo apt install php-curl php-gd php-mbstring php-xml php-xmlrpc -y
-sudo apt -y install php libapache2-mod-php php-mysql
-sudo apt install apache2 -y
-sudo apt install mysql-server -y
-sudo apt install curl -y
-
-#instalando o wp-cli
-curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
-
-chmod +x wp-cli.phar
-sudo mv wp-cli.phar /usr/local/bin/wp
-
-#CONFIGURA MYSQL PRA RECEBER O WORDPRESS
-sudo mysql <<EOF
-ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'root';
-
-FLUSH PRIVILEGES;
-EOF
-
-#ALGUMAS MODIFICAÇÕES NO APACHE2
-
-sudo sed -i "s/Options Indexes FollowSymLinks/Options FollowSymLinks/" /etc/apache2/apache2.conf
-sudo a2dissite 000-default.conf
-sudo systemctl stop apache2.service
-sudo systemctl start apache2.service
-sudo systemctl enable apache2.service
-
+apt-get update 
+apt-get install mysql-client php7.2 php7.2-mysql libapache2-mod-php7.2 php7.2-cli php7.2-cgi php7.2-gd apache2 apache2-utils -y 
+systemctl enable apache2 
+systemctl start apache2
+cd /tmp
+wget -c http://wordpress.org/latest.tar.gz
+tar -xzvf latest.tar.gz
+rsync -av wordpress/* /var/www/html/
+chmod -R 755 /var/www/html/
 cd /var/www/html
-#sudo mkdir d
-#cd /var/www/html/d
-sudo mkdir ind
-sudo mv index.html ind
-sudo chown -R `whoami`:www-data /var/www/html
-wp core download --locale=pt_BR
-#CONFIGURANDO BD DO WORDPRESS
-wp core config --dbname=cz --dbuser=root --dbpass=root --dbhost=localhost --dbprefix=coz
-wp db create
-IP="$(curl http://169.254.169.254/latest/meta-data/public-ipv4)"
-echo $IP
-wp core install --url=http://$IP --title=Blog\ Cozinha --admin_user=admin --admin_password=123456 --admin_email=teste@teste.com.br
+mv wp-config-sample.php wp-config.php
 
+sed -i 's/database_name_here/wordpress/g' wp-config.php
+sed -i 's/username_here/wordpress/g' wp-config.php
+sed -i 's/password_here/wordpress/g' wp-config.php
+sed -i "s/localhost/$IP_PRIVATE_BD/g" wp-config.php
+
+systemctl restart apache2.service
+rm -rf /var/www/html/index.html
+sed -i '/warn/a <Directory /var/www/html/>\n   AllowOverride All\n</Directory>' /etc/apache2/sites-available/000-default.conf
+a2enmod rewrite
+service apache2 restart
+touch /var/www/html/.htaccess
+chown :www-data /var/www/html/.htaccess
+chmod 664 /var/www/html/.htaccess
+service apache2 restart
 
 
 
